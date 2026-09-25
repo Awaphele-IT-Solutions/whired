@@ -125,7 +125,13 @@ Deno.serve(async (req) => {
       .single();
     if (saveError || !saved) {
       await release();
-      return reply({ error: "server_error" }, 500);
+      console.error("org_research upsert failed:", saveError?.message ?? "no row returned", saveError);
+      return reply({
+        error: "server_error",
+        message: saveError?.message ?? "research save returned no row",
+        code: saveError?.code ?? null,
+        details: saveError?.details ?? null,
+      }, 500);
     }
 
     await admin.from("research_usage").update({ status: "done" }).eq("id", reservation.id);
