@@ -125,7 +125,13 @@ Deno.serve(async (req) => {
       .single();
     if (saveError || !saved) {
       await release();
-      return reply({ error: "server_error" }, 500);
+      console.error("org_research upsert failed:", saveError?.message ?? "no row returned", saveError);
+      return reply({
+        error: "server_error",
+        message: saveError?.message ?? "research save returned no row",
+        code: saveError?.code ?? null,
+        details: saveError?.details ?? null,
+      }, 500);
     }
 
     await admin.from("research_usage").update({ status: "done" }).eq("id", reservation.id);
@@ -135,9 +141,11 @@ Deno.serve(async (req) => {
     await release();
     if (err instanceof AiUnavailableError) {
       console.error("AI unavailable:", err.message, err.attempts.join(" | "));
-      return reply({ error: "ai_unavailable" }, 503);
+      // Include attempts so the client / admin Errors panel can show the real reason
+      // (model not found, bad key, unusable JSON, etc.) instead of a generic busy message.
+      return reply({ error: "ai_unavailable", reason: err.message, attempts: err.attempts }, 503);
     }
     console.error(err);
-    return reply({ error: "server_error" }, 500);
+    return reply({ error: "server_error", message: String((err as Error)?.message ?? err).slice(0, 200) }, 500);
   }
 });

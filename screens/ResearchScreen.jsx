@@ -110,12 +110,14 @@ function ResearchDetail({ item, ent, onBack, onChanged, onUpgrade }) {
     setBusy(true);
     setError(null);
     try {
-      await requestResearch({
+      const res = await requestResearch({
         orgName: item.org_name,
         roleFocus: item.role_focus,
         refresh: true,
       });
-      await Promise.all([onChanged(), refreshEntitlements()]);
+      if (res.research) onChanged(res.research);
+      else await onChanged();
+      await refreshEntitlements();
     } catch (e) {
       if (e.code === 'RESEARCH_LIMIT') onUpgrade(e.detail);
       else setError(describeResearchError(e));
@@ -278,13 +280,24 @@ export default function ResearchScreen() {
   const [error, setError] = useState(null);
   const [notice, setNotice] = useState(null);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (incoming) => {
+    if (incoming?.id) {
+      setItems((prev) => {
+        const rest = prev.filter((i) => i.id !== incoming.id && i.org_key !== incoming.org_key);
+        return [incoming, ...rest];
+      });
+    }
     const { data, error: err } = await supabase
       .from('org_research')
       .select('*')
       .order('updated_at', { ascending: false });
-    if (err) setError("Couldn't load your saved research.");
-    else setItems(data ?? []);
+    if (err) {
+      if (!incoming?.id) setError("Couldn't load your saved research.");
+    } else if (data?.length) {
+      setItems(data);
+    } else if (!incoming?.id) {
+      setItems([]);
+    }
   }, []);
 
   useEffect(() => {
@@ -337,9 +350,14 @@ export default function ResearchScreen() {
     setBusy(true);
     try {
       const res = await requestResearch({ orgName: name, roleFocus: role.trim() });
-      await Promise.all([load(), refreshEntitlements()]);
+      const research = res.research;
+      setItems((prev) => {
+        const rest = prev.filter((i) => i.id !== research.id && i.org_key !== research.org_key);
+        return [research, ...rest];
+      });
+      await refreshEntitlements();
       setOrgName('');
-      setSelectedId(res.research.id);
+      setSelectedId(research.id);
     } catch (e) {
       if (e.code === 'RESEARCH_LIMIT') promptUpgrade(e.detail);
       else setError(describeResearchError(e));

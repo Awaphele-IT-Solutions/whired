@@ -8,6 +8,7 @@ import { adminCall } from '../../lib/admin';
 import { colors, fonts } from '../../lib/theme';
 import AdminGate from './AdminGate';
 import Audit from './Audit';
+import Errors from './Errors';
 import Overview from './Overview';
 import Plans from './Plans';
 import Providers from './Providers';
@@ -17,6 +18,7 @@ import { adminStyles as s } from './common';
 const SECTIONS = [
   { key: 'overview', label: 'Overview' },
   { key: 'providers', label: 'AI providers' },
+  { key: 'errors', label: 'Errors' },
   { key: 'plans', label: 'Plans' },
   { key: 'users', label: 'Users' },
   { key: 'audit', label: 'Audit' },
@@ -65,6 +67,7 @@ const load = useCallback(async () => {
 
       {data && section === 'overview' ? <Overview data={data} /> : null}
       {data && section === 'providers' ? <Providers data={data} reload={load} /> : null}
+      {section === 'errors' ? <Errors /> : null}
       {data && section === 'plans' ? <Plans data={data} reload={load} /> : null}
       {data && section === 'users' ? <Users plans={data.plans} /> : null}
       {section === 'audit' ? <Audit /> : null}
