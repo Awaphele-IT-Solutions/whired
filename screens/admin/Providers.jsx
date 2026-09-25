@@ -18,6 +18,7 @@ const PRESETS = [
   { name: 'Gemini', kind: 'openai_compatible', base_url: 'https://generativelanguage.googleapis.com/v1beta/openai', model: '' },
   { name: 'OpenRouter', kind: 'openai_compatible', base_url: 'https://openrouter.ai/api/v1', model: '' },
   { name: 'Anthropic', kind: 'anthropic', base_url: 'https://api.anthropic.com', model: '', web_search: true },
+  { name: 'Tavily', kind: 'tavily', base_url: 'https://api.tavily.com', model: 'tavily-search', purposes: ['research'] },
   { name: 'Custom', kind: 'openai_compatible', base_url: '', model: '' },
 ];
 
@@ -82,6 +83,7 @@ function ProviderForm({ initial, onDone, onCancel }) {
       base_url: p.base_url,
       model: p.model || f.model,
       web_search: !!p.web_search,
+      purposes: p.purposes || f.purposes,
     });
 
   const togglePurpose = (key) =>
@@ -162,10 +164,15 @@ function ProviderForm({ initial, onDone, onCancel }) {
       <View style={s.chips}>
         <Chip label="OpenAI-compatible" selected={f.kind === 'openai_compatible'} onPress={() => set({ kind: 'openai_compatible', web_search: false })} />
         <Chip label="Anthropic" selected={f.kind === 'anthropic'} onPress={() => set({ kind: 'anthropic' })} />
+        <Chip label="Web search (Tavily)" selected={f.kind === 'tavily'} onPress={() => set({ kind: 'tavily', web_search: false, purposes: ['research'] })} />
       </View>
 
       <Field label="Base URL" value={f.base_url} onChangeText={(v) => set({ base_url: v })} placeholder="https://api.example.com/v1" autoCapitalize="none" autoCorrect={false} keyboardType="url" hint="HTTPS only. IP addresses and internal hosts are rejected." />
-      <Field label="Model" value={f.model} onChangeText={(v) => set({ model: v })} placeholder="Exact model id from the provider" autoCapitalize="none" autoCorrect={false} />
+      {f.kind !== 'tavily' ? (
+        <Field label="Model" value={f.model} onChangeText={(v) => set({ model: v })} placeholder="Exact model id from the provider" autoCapitalize="none" autoCorrect={false} />
+      ) : (
+        <Field label="Model" value={f.model} onChangeText={(v) => set({ model: v })} editable={false} hint="Not used for a search provider." />
+      )}
       <Field
         label="API key"
         value={f.api_key}
@@ -185,7 +192,7 @@ function ProviderForm({ initial, onDone, onCancel }) {
 
       {f.kind === 'anthropic' ? (
         <Toggle label="Use web search for research" hint="Needs web search enabled on your Anthropic account. Gives sourced research." value={f.web_search} onValueChange={(v) => set({ web_search: v })} />
-      ) : (
+      ) : f.kind === 'tavily' ? null : (
         <Toggle label="Ask for JSON mode" hint="Turn off if this provider or model rejects response_format." value={f.json_mode} onValueChange={(v) => set({ json_mode: v })} />
       )}
 
@@ -277,7 +284,8 @@ export default function Providers({ data, reload }) {
             }
           >
             <Text style={s.small}>
-              {p.kind === 'anthropic' ? 'Anthropic' : 'OpenAI-compatible'}, {p.model}
+              {p.kind === 'anthropic' ? 'Anthropic' : p.kind === 'tavily' ? 'Web search (Tavily)' : 'OpenAI-compatible'}
+              {p.kind === 'tavily' ? '' : `, ${p.model}`}
             </Text>
             <Text style={[s.small, { marginTop: 2 }]}>
               Priority {p.priority}, {p.purposes.join(' and ')}

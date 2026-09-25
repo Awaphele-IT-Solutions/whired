@@ -8,7 +8,7 @@
 // This module is pure (no Deno or Supabase imports) so it can be tested.
 
 export type Purpose = "interview" | "research";
-export type Kind = "openai_compatible" | "anthropic";
+export type Kind = "openai_compatible" | "anthropic" | "tavily";
 
 export interface Provider {
   id: string;
@@ -130,6 +130,7 @@ export function pickCandidates(
   return all
     .filter((p) =>
       p.enabled &&
+      p.kind !== "tavily" && // pure search, not a chat/completions provider
       p.purposes.includes(purpose) &&
       (!p.cooldown_until || Date.parse(p.cooldown_until) <= nowMs) &&
       underLimits(p)
@@ -142,6 +143,54 @@ export function pickCandidates(
       if (ua !== ub) return ua - ub;
       return a.label.localeCompare(b.label);
     });
+}
+
+// Picks the best enabled Tavily provider for a purpose, same ordering rules
+// (priority, then headroom) as pickCandidates, but for the tavily kind only.
+export function pickTavily(all: ProviderWithLoad[], purpose: Purpose, nowMs: number): ProviderWithLoad | null {
+  const candidates = all
+    .filter((p) =>
+      p.enabled &&
+      p.kind === "tavily" &&
+      p.purposes.includes(purpose) &&
+      (!p.cooldown_until || Date.parse(p.cooldown_until) <= nowMs) &&
+      underLimits(p)
+    )
+    .sort((a, b) => (a.priority !== b.priority ? a.priority - b.priority : utilisation(a) - utilisation(b)));
+  return candidates[0] ?? null;
+}
+
+export interface TavilyResult { title: string; url: string; content: string }
+export interface TavilyOutcome { results: TavilyResult[]; answer: string }
+
+// Direct call to Tavily's search API. Not routed through callProvider/runAi:
+// Tavily returns ranked results, not a chat completion, so it's a different
+// shape entirely. Callers should treat a failure here as non-fatal and fall
+// back to an ungrounded request.
+export async function tavilySearch(
+  apiKey: string,
+  query: string,
+  fetchFn: typeof fetch,
+  opts: { maxResults?: number; timeoutMs?: number } = {},
+): Promise<TavilyOutcome> {
+  const signal = AbortSignal.timeout(opts.timeoutMs ?? 20_000);
+  const res = await fetchFn("https://api.tavily.com/search", {
+    method: "POST",
+    signal,
+    headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
+    body: JSON.stringify({
+      query,
+      search_depth: "basic",
+      max_results: opts.maxResults ?? 5,
+      include_answer: true,
+    }),
+  });
+  if (!res.ok) await failFromResponse(res);
+  const data = await res.json();
+  const results: TavilyResult[] = (Array.isArray(data?.results) ? data.results : [])
+    .map((r: any) => ({ title: String(r?.title ?? ""), url: String(r?.url ?? ""), content: String(r?.content ?? "") }))
+    .filter((r: TavilyResult) => r.url);
+  return { results, answer: String(data?.answer ?? "") };
 }
 
 // --------------------------------------------------------------- parsing
@@ -210,6 +259,13 @@ export async function callProvider(
   req: Pick<AiRequest, "system" | "messages" | "json" | "webSearch" | "maxTokens" | "timeoutMs">,
   fetchFn: typeof fetch,
 ): Promise<RawResult> {
+  if (p.kind === "tavily") {
+    // Tavily is a search API, not a chat/completions endpoint. It's called
+    // directly via tavilySearch() from research/index.ts and from the admin
+    // "test" action, never routed through here.
+    throw new Error("tavily providers don't support chat completions");
+  }
+
   const base = p.base_url.replace(/\/+$/, "");
   const signal = AbortSignal.timeout(req.timeoutMs ?? 30_000);
 

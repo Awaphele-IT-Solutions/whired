@@ -60,6 +60,23 @@ export function cleanResearch(obj: any): ResearchContent {
   return out;
 }
 
+// Formats live Tavily results as extra context for the report-writing
+// model. Kept separate from researchUserPrompt() so it can be omitted
+// entirely when no Tavily provider is configured.
+export function tavilyContextBlock(results: { title: string; url: string; content: string }[], answer: string): string {
+  if (!results.length) return "";
+  const parts = results
+    .slice(0, 5)
+    .map((r, i) => `[${i + 1}] ${clean(r.title, 120)} (${r.url})\n${clean(r.content, 500)}`);
+  return [
+    "Live web search results (use these to inform and verify the report; do not cite anything beyond what they support):",
+    answer ? `Summary: ${clean(answer, 400)}` : "",
+    ...parts,
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+}
+
 export function cleanSources(sources: Source[]): Source[] {
   const seen = new Set<string>();
   const out: Source[] = [];

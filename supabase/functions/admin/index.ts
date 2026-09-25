@@ -7,7 +7,7 @@
 
 import { averageCallsPerActiveUser, buildWarnings, computeCapacity, providerStatus } from "../_shared/admin_logic.ts";
 import type { ProviderView } from "../_shared/admin_logic.ts";
-import { callProvider } from "../_shared/ai.ts";
+import { callProvider, tavilySearch } from "../_shared/ai.ts";
 import { makeGetKey } from "../_shared/ai_store.ts";
 import { encryptSecret, last4 } from "../_shared/crypto.ts";
 import { aalFromJwt, authenticate, clampInt, clean, reply, serviceClient } from "../_shared/http.ts";
@@ -16,7 +16,7 @@ import { validateBaseUrl } from "../_shared/url.ts";
 const NO_CORS = {};
 const send = (body: unknown, status = 200) => reply(body, status, NO_CORS);
 
-const KINDS = ["openai_compatible", "anthropic"];
+const KINDS = ["openai_compatible", "anthropic", "tavily"];
 const PURPOSES = ["interview", "research"];
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -203,21 +203,32 @@ Deno.serve(async (req) => {
         const started = Date.now();
         try {
           const key = await makeGetKey()(p);
-          const out = await callProvider(
-            p, key,
-            { system: 'Reply with the JSON {"ok":true} and nothing else.', messages: [{ role: "user", content: "ping" }], json: true, maxTokens: 32, timeoutMs: 20_000 },
-            fetch,
-          );
+          let tokensIn: number | null = null;
+          let tokensOut: number | null = null;
+          let limits: Record<string, string> = {};
+          if (p.kind === "tavily") {
+            const outcome = await tavilySearch(key, "test query", fetch, { maxResults: 1, timeoutMs: 20_000 });
+            if (!outcome.results.length) throw new Error("Tavily responded but returned no results");
+          } else {
+            const out = await callProvider(
+              p, key,
+              { system: 'Reply with the JSON {"ok":true} and nothing else.', messages: [{ role: "user", content: "ping" }], json: true, maxTokens: 32, timeoutMs: 20_000 },
+              fetch,
+            );
+            tokensIn = out.tokensIn;
+            tokensOut = out.tokensOut;
+            limits = out.limits;
+          }
           const latency = Date.now() - started;
           await admin.from("ai_provider_calls").insert({
             provider_id: p.id, provider_label: p.label, user_id: null, purpose: "test", status: "ok",
-            http_status: 200, tokens_in: out.tokensIn, tokens_out: out.tokensOut, latency_ms: latency, error: null,
+            http_status: 200, tokens_in: tokensIn, tokens_out: tokensOut, latency_ms: latency, error: null,
           });
           await admin.from("ai_providers").update({
-            last_ok_at: new Date().toISOString(), last_limits: out.limits, cooldown_until: null, last_error: null,
+            last_ok_at: new Date().toISOString(), last_limits: limits, cooldown_until: null, last_error: null,
           }).eq("id", p.id);
           await audit("provider_test", p.id, { label: p.label, ok: true });
-          return send({ ok: true, latency_ms: latency, limits: out.limits });
+          return send({ ok: true, latency_ms: latency, limits });
         } catch (e) {
           const message = String((e as Error)?.message ?? "failed").slice(0, 160);
           await admin.from("ai_provider_calls").insert({

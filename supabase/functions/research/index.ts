@@ -4,11 +4,11 @@
 //    (reserved atomically in the database, released if the AI call fails).
 // Users can't write research rows directly, so the quota can't be bypassed.
 
-import { AiUnavailableError, parseJsonLoose, runAi } from "../_shared/ai.ts";
+import { AiUnavailableError, parseJsonLoose, pickTavily, runAi, tavilySearch } from "../_shared/ai.ts";
 import { makeGetKey, makeStore } from "../_shared/ai_store.ts";
 import { authenticate, checkDailyCap, clean, cors, reply, serviceClient } from "../_shared/http.ts";
 import { normalizeOrg } from "../_shared/org.ts";
-import { cleanResearch, cleanSources, researchSystemPrompt, researchUserPrompt } from "../_shared/research_logic.ts";
+import { cleanResearch, cleanSources, researchSystemPrompt, researchUserPrompt, tavilyContextBlock } from "../_shared/research_logic.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
@@ -59,13 +59,36 @@ Deno.serve(async (req) => {
   }
   const release = () => admin.from("research_usage").delete().eq("id", reservation.id);
 
+  // Best-effort: a Tavily provider, if configured, gets a real web search
+  // done before asking the text model to write the report. This works for
+  // any text provider (Groq, OpenAI, Anthropic, ...), not just ones with
+  // their own built-in search. A Tavily failure never fails the whole
+  // request -- it just falls back to an ungrounded report.
+  let tavilyContext = "";
+  let tavilySources: { title: string; url: string }[] = [];
+  try {
+    const tavilyProvider = pickTavily(await makeStore(admin).listProviders(), "research", Date.now());
+    if (tavilyProvider) {
+      const key = await makeGetKey()(tavilyProvider);
+      const query = [orgName, roleFocus, "company culture interview process recent news"].filter(Boolean).join(" ");
+      const outcome = await tavilySearch(key, query, fetch, { maxResults: 5 });
+      tavilyContext = tavilyContextBlock(outcome.results, outcome.answer);
+      tavilySources = outcome.results.map((r) => ({ title: r.title, url: r.url }));
+    }
+  } catch (e) {
+    console.error("Tavily search skipped:", (e as Error)?.message ?? e);
+  }
+
   try {
     const result = await runAi(
       {
         purpose: "research",
         userId,
         system: researchSystemPrompt(),
-        messages: [{ role: "user", content: researchUserPrompt(orgName, roleFocus) }],
+        messages: [
+          { role: "user", content: researchUserPrompt(orgName, roleFocus) },
+          ...(tavilyContext ? [{ role: "user" as const, content: tavilyContext }] : []),
+        ],
         json: true,
         webSearch: true,
         maxTokens: 3000,
@@ -76,6 +99,12 @@ Deno.serve(async (req) => {
       { store: makeStore(admin), getKey: makeGetKey() },
     );
 
+    // Prefer Tavily's real sources when we have them -- they're verified
+    // search results regardless of which text model wrote the report, not
+    // whatever the model itself claims to have cited.
+    const sources = tavilySources.length ? cleanSources(tavilySources) : cleanSources(result.sources);
+    const grounded = tavilySources.length > 0 || result.grounded;
+
     const { data: saved, error: saveError } = await admin
       .from("org_research")
       .upsert(
@@ -85,8 +114,8 @@ Deno.serve(async (req) => {
           org_name: orgName,
           role_focus: roleFocus || null,
           content: result.value,
-          sources: cleanSources(result.sources),
-          grounded: result.grounded,
+          sources,
+          grounded,
           research_count: (existing?.research_count ?? 0) + 1,
           researched_at: new Date().toISOString(),
         },
