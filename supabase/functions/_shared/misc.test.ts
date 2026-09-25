@@ -47,9 +47,21 @@ test("validateBaseUrl blocks non-https, private and metadata hosts", () => {
 });
 
 test("cleanResearch trims, caps and requires an overview", () => {
-  const c = cleanResearch({ overview: " Acme  makes \n tools ", culture: ["a", "", "b"], likely_topics: Array(20).fill("t") });
+  const c = cleanResearch({
+    overview: " Acme  makes \n tools ",
+    vision: "Build the default tools",
+    values: ["Ownership", ""],
+    culture: ["a", "", "b"],
+    challenges: ["Margin pressure"],
+    strengths: ["Won a big contract"],
+    likely_topics: Array(20).fill("t"),
+  });
   assert.equal(c.overview, "Acme makes tools");
+  assert.equal(c.vision, "Build the default tools");
+  assert.deepEqual(c.values, ["Ownership"]);
   assert.deepEqual(c.culture, ["a", "b"]);
+  assert.deepEqual(c.challenges, ["Margin pressure"]);
+  assert.deepEqual(c.strengths, ["Won a big contract"]);
   assert.equal(c.likely_topics.length, 8);
   assert.throws(() => cleanResearch({ culture: ["x"] }));
 });
@@ -67,10 +79,17 @@ test("cleanSources dedupes, keeps http(s) only, caps at 8", () => {
 
 test("researchContextBlock is empty without data and includes notes when present", () => {
   assert.equal(researchContextBlock(null), "");
-  const b = researchContextBlock({ org_name: "Acme", content: { overview: "Makes tools", culture: ["Ownership"] }, notes: "Met their recruiter" });
+  const b = researchContextBlock({
+    org_name: "Acme",
+    content: { overview: "Makes tools", culture: ["Ownership"], vision: "Default tools", challenges: ["Churn"] },
+    notes: "Met their recruiter",
+  });
   assert.match(b, /<research>/);
   assert.match(b, /Makes tools/);
+  assert.match(b, /Default tools/);
+  assert.match(b, /Churn/);
   assert.match(b, /Met their recruiter/);
+  assert.match(b, /judge whether this candidate is a fit/);
 });
 
 const UID = "11111111-2222-3333-4444-555555555555";

@@ -70,7 +70,7 @@ Deno.serve(async (req) => {
     const tavilyProvider = pickTavily(await makeStore(admin).listProviders(), "research", Date.now());
     if (tavilyProvider) {
       const key = await makeGetKey()(tavilyProvider);
-      const query = [orgName, roleFocus, "company culture interview process recent news"].filter(Boolean).join(" ");
+      const query = [orgName, roleFocus, "values mission vision culture challenges accomplishments news"].filter(Boolean).join(" ");
       const outcome = await tavilySearch(key, query, fetch, { maxResults: 5 });
       tavilyContext = tavilyContextBlock(outcome.results, outcome.answer);
       tavilySources = outcome.results.map((r) => ({ title: r.title, url: r.url }));
@@ -91,7 +91,7 @@ Deno.serve(async (req) => {
         ],
         json: true,
         webSearch: true,
-        maxTokens: 3000,
+        maxTokens: 4000,
         timeoutMs: 60_000,
         maxAttempts: 2,
         validate: (text) => cleanResearch(parseJsonLoose(text)),

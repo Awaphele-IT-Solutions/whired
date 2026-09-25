@@ -180,9 +180,34 @@ function ResearchDetail({ item, ent, onBack, onChanged, onUpgrade }) {
           <Text style={styles.body}>{c.overview}</Text>
         </Section>
       ) : null}
+      {c.vision ? (
+        <Section title="Vision">
+          <Text style={styles.body}>{c.vision}</Text>
+        </Section>
+      ) : null}
+      {c.values?.length ? (
+        <Section title="Values">
+          <Bullets items={c.values} />
+        </Section>
+      ) : null}
       {c.culture?.length ? (
-        <Section title="Culture and values">
+        <Section title="Culture">
           <Bullets items={c.culture} />
+        </Section>
+      ) : null}
+      {c.area ? (
+        <Section title="The area they operate in">
+          <Text style={styles.body}>{c.area}</Text>
+        </Section>
+      ) : null}
+      {c.challenges?.length ? (
+        <Section title="Current challenges">
+          <Bullets items={c.challenges} />
+        </Section>
+      ) : null}
+      {c.strengths?.length ? (
+        <Section title="Wins and strengths">
+          <Bullets items={c.strengths} />
         </Section>
       ) : null}
       {c.interview_process ? (

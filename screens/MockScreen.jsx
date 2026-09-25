@@ -32,6 +32,10 @@ const clampScore = (n) => Math.max(0, Math.min(100, Math.round(Number(n) || 0)))
 function normaliseSummary(raw) {
   const stats = {};
   for (const s of SKILLS) stats[s.key] = clampScore(raw?.stats?.[s.key]);
+  const verdictRaw = String(raw?.fit_verdict ?? '').toLowerCase().trim();
+  const verdict = ['strong match', 'possible match', 'weak match', 'unclear'].includes(verdictRaw)
+    ? verdictRaw
+    : '';
   return {
     score: clampScore(raw?.score),
     message: typeof raw?.message === 'string' ? raw.message : '',
@@ -39,6 +43,10 @@ function normaliseSummary(raw) {
       ? raw.feedback.filter((f) => typeof f === 'string' && f.trim())
       : [],
     stats,
+    fit_score: clampScore(raw?.fit_score ?? raw?.stats?.culture_fit),
+    fit_verdict: verdict,
+    fit_why: Array.isArray(raw?.fit_why) ? raw.fit_why.filter((f) => typeof f === 'string' && f.trim()) : [],
+    fit_gaps: Array.isArray(raw?.fit_gaps) ? raw.fit_gaps.filter((f) => typeof f === 'string' && f.trim()) : [],
   };
 }
 
@@ -199,8 +207,16 @@ export default function MockScreen() {
       level,
       question_count: total,
       score: result.score,
-      stats: result.stats,
-      feedback: result.feedback,
+      stats: {
+        ...result.stats,
+        fit_score: result.fit_score,
+        fit_verdict: result.fit_verdict,
+      },
+      feedback: [
+        ...(result.feedback || []),
+        ...(result.fit_why || []).map((f) => `Fit: ${f}`),
+        ...(result.fit_gaps || []).map((f) => `Gap: ${f}`),
+      ],
       transcript,
     });
     setSaveState(err ? 'failed' : 'saved');
@@ -353,6 +369,35 @@ export default function MockScreen() {
             </View>
           ))}
         </Tile>
+
+        {summary.fit_verdict || summary.fit_why.length || summary.fit_gaps.length ? (
+          <Tile
+            label="Role fit"
+            right={
+              summary.fit_verdict ? (
+                <Text style={styles.statValue}>{summary.fit_score}</Text>
+              ) : null
+            }
+            style={{ marginBottom: 12 }}
+          >
+            {summary.fit_verdict ? (
+              <Text style={[styles.note, { marginBottom: 10 }]}>
+                {summary.fit_verdict.charAt(0).toUpperCase() + summary.fit_verdict.slice(1)}
+                {summary.fit_score ? ` · ${summary.fit_score} / 100` : ''}
+              </Text>
+            ) : null}
+            {summary.fit_why.map((f, i) => (
+              <Text key={`why-${i}`} style={[styles.note, i > 0 && { marginTop: 10 }]}>
+                Match: {f}
+              </Text>
+            ))}
+            {summary.fit_gaps.map((f, i) => (
+              <Text key={`gap-${i}`} style={[styles.note, { marginTop: summary.fit_why.length || i ? 10 : 0 }]}>
+                Gap: {f}
+              </Text>
+            ))}
+          </Tile>
+        ) : null}
 
         {summary.feedback.length ? (
           <Tile label="Coach notes" style={{ marginBottom: 18 }}>
