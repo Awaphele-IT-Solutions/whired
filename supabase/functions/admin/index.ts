@@ -338,6 +338,39 @@ Deno.serve(async (req) => {
         return send({ entries: data ?? [] });
       }
 
+      // ---------------------------------------------------------- recent provider calls
+      // Lets the admin see errors and metrics without opening Supabase.
+      case "recent_calls": {
+        const limit = clampInt(body.limit ?? 40, 1, 100);
+        const errorsOnly = body.errors_only === true;
+        let q = admin
+          .from("ai_provider_calls")
+          .select("id,provider_id,provider_label,user_id,purpose,status,http_status,tokens_in,tokens_out,latency_ms,error,created_at")
+          .order("created_at", { ascending: false })
+          .limit(limit);
+        if (errorsOnly) q = q.neq("status", "ok");
+        const { data, error } = await q;
+        if (error) throw new Error(error.message);
+
+        // Quick aggregates for the panel header
+        const hourAgo = new Date(Date.now() - 3_600_000).toISOString();
+        const dayAgo = new Date(Date.now() - 86_400_000).toISOString();
+        const [{ count: errors1h }, { count: errors24h }, { count: ok24h }] = await Promise.all([
+          admin.from("ai_provider_calls").select("id", { count: "exact", head: true }).neq("status", "ok").gte("created_at", hourAgo),
+          admin.from("ai_provider_calls").select("id", { count: "exact", head: true }).neq("status", "ok").gte("created_at", dayAgo),
+          admin.from("ai_provider_calls").select("id", { count: "exact", head: true }).eq("status", "ok").gte("created_at", dayAgo),
+        ]);
+
+        return send({
+          calls: data ?? [],
+          metrics: {
+            errors_1h: errors1h ?? 0,
+            errors_24h: errors24h ?? 0,
+            ok_24h: ok24h ?? 0,
+          },
+        });
+      }
+
       default:
         return send({ error: "unknown_action" }, 400);
     }
