@@ -29,7 +29,7 @@ import {
   scoreSeries,
   weakestSkill,
 } from '../lib/stats';
-import { colors, fonts, radius } from '../lib/theme';
+import { useTheme } from '../lib/ThemeContext';
 import { useDashboard } from '../lib/useDashboard';
 import { useTabActive, useTabs } from '../navigation/tabs';
 
@@ -37,7 +37,7 @@ const GAP = 12;
 const PAD = 20;
 const STORY_GOAL = 6;
 
-function DeltaPill({ value }) {
+function DeltaPill({ value, styles }) {
   if (value === null || value === undefined) return null;
   const label = (value > 0 ? '+' : '') + value;
   return (
@@ -48,6 +48,8 @@ function DeltaPill({ value }) {
 }
 
 export default function HomeScreen() {
+  const { colors, fonts, radius } = useTheme();
+  const styles = getStyles(colors, fonts, radius);
   const { width } = useWindowDimensions();
   const navigation = useNavigation();
   const { profile, entitlements } = useAuth();
@@ -154,7 +156,7 @@ export default function HomeScreen() {
           index="02"
           label="Last score"
           style={tileSize}
-          right={<DeltaPill value={d.delta} />}
+          right={<DeltaPill value={d.delta} styles={styles} />}
           onPress={() => goTo('mock')}
         >
           <DotText
@@ -265,7 +267,7 @@ export default function HomeScreen() {
         index="07"
         label="Score trend"
         style={{ marginTop: GAP }}
-        right={<DeltaPill value={d.trendDelta} />}
+        right={<DeltaPill value={d.trendDelta} styles={styles} />}
         onPress={() => goTo('you')}
       >
         <DotLine values={d.scores} width={wideInnerW} height={84} dot={3} spacing={7} />
@@ -338,7 +340,8 @@ export default function HomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors, fonts, radius) =>
+  StyleSheet.create({
   status: {
     flexDirection: 'row',
     alignItems: 'center',

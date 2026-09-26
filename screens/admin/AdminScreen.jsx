@@ -5,7 +5,7 @@ import Chip from '../../components/Chip';
 import DotText from '../../components/dot/DotText';
 import Screen from '../../components/Screen';
 import { adminCall } from '../../lib/admin';
-import { colors, fonts } from '../../lib/theme';
+import { useTheme } from '../../lib/ThemeContext';
 import AdminGate from './AdminGate';
 import Audit from './Audit';
 import Errors from './Errors';
@@ -13,7 +13,7 @@ import Overview from './Overview';
 import Plans from './Plans';
 import Providers from './Providers';
 import Users from './Users';
-import { adminStyles as s } from './common';
+import { getAdminStyles } from './common';
 
 const SECTIONS = [
   { key: 'overview', label: 'Overview' },
@@ -25,18 +25,21 @@ const SECTIONS = [
 ];
 
 function Console({ navigation, reverify }) {
+  const { colors, fonts, radius } = useTheme();
+  const styles = getStyles(colors, fonts);
+  const s = getAdminStyles(colors, fonts, radius);
   const [section, setSection] = useState('overview');
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
 
-const load = useCallback(async () => {
-  try {
-    setData(await adminCall('overview'));
-    setError(null);
-  } catch (e) {
-    setError(JSON.stringify(e.detail));
-  }
-}, [navigation, reverify]);
+  const load = useCallback(async () => {
+    try {
+      setData(await adminCall('overview'));
+      setError(null);
+    } catch (e) {
+      setError(JSON.stringify(e.detail));
+    }
+  }, [navigation, reverify]);
 
   useEffect(() => {
     load();
@@ -83,7 +86,8 @@ export default function AdminScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
-  top: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 18 },
-  link: { fontFamily: fonts.monoBold, fontSize: 13, color: colors.accent },
-});
+const getStyles = (colors, fonts) =>
+  StyleSheet.create({
+    top: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 18 },
+    link: { fontFamily: fonts.monoBold, fontSize: 13, color: colors.accent },
+  });

@@ -5,9 +5,11 @@ import Button from '../components/Button';
 import Field from '../components/Field';
 import Screen from '../components/Screen';
 import { supabase } from '../lib/supabase';
-import { colors, fonts } from '../lib/theme';
+import { useTheme } from '../lib/ThemeContext';
 
 export default function StoryEditScreen({ navigation, route }) {
+  const { colors, fonts } = useTheme();
+  const styles = getStyles(colors, fonts);
   const existing = route.params?.story;
   const [title, setTitle] = useState(existing?.title ?? '');
   const [situation, setSituation] = useState(existing?.situation ?? '');
@@ -113,7 +115,8 @@ export default function StoryEditScreen({ navigation, route }) {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors, fonts) =>
+  StyleSheet.create({
   heading: {
     fontFamily: fonts.monoBold,
     fontSize: 20,

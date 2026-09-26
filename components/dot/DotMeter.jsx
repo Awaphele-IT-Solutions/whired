@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import { View } from 'react-native';
 
-import { colors } from '../../lib/theme';
+import { useTheme } from '../../lib/ThemeContext';
 
 // A single row of dots showing a 0..100 value.
 function DotMeter({
@@ -9,9 +9,12 @@ function DotMeter({
   count = 10,
   dot = 5,
   gap = 3,
-  color = colors.ink,
-  accent = colors.accent,
+  color,
+  accent,
 }) {
+  const { colors } = useTheme();
+  const dotColor = color ?? colors.ink;
+  const dotAccent = accent ?? colors.accent;
   const lit = Math.round((Math.max(0, Math.min(100, value)) / 100) * count);
   return (
     <View style={{ flexDirection: 'row' }}>
@@ -24,7 +27,7 @@ function DotMeter({
             borderRadius: dot / 2,
             marginLeft: i === 0 ? 0 : gap,
             backgroundColor:
-              i < lit ? (i === lit - 1 ? accent : color) : colors.dotOff,
+              i < lit ? (i === lit - 1 ? dotAccent : dotColor) : colors.dotOff,
           }}
         />
       ))}

@@ -1,7 +1,7 @@
 import React, { memo, useMemo } from 'react';
 import { View } from 'react-native';
 
-import { colors } from '../../lib/theme';
+import { useTheme } from '../../lib/ThemeContext';
 
 // A ring of dots that fills clockwise from the top. The last few lit dots
 // use the accent colour, like the leading edge of a progress arc.
@@ -10,11 +10,14 @@ function DotRing({
   count = 56,
   progress = 0,
   dot = 3,
-  color = colors.ink,
-  accent = colors.accent,
+  color,
+  accent,
   accentTail = 3,
   children,
 }) {
+  const { colors } = useTheme();
+  const dotColor = color ?? colors.ink;
+  const dotAccent = accent ?? colors.accent;
   const clamped = Math.max(0, Math.min(1, progress || 0));
   const lit = Math.round(clamped * count);
 
@@ -35,7 +38,7 @@ function DotRing({
     <View style={{ width: size, height: size }}>
       {points.map((p) => {
         let bg = colors.dotOff;
-        if (p.i < lit) bg = p.i >= lit - accentTail ? accent : color;
+        if (p.i < lit) bg = p.i >= lit - accentTail ? dotAccent : dotColor;
         return (
           <View
             key={p.i}

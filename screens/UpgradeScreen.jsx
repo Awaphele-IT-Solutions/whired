@@ -16,7 +16,7 @@ import {
 import { PRIVACY_POLICY_URL, TERMS_URL } from '../lib/config';
 import { formatShortDate } from '../lib/dates';
 import { supabase } from '../lib/supabase';
-import { colors, fonts, radius } from '../lib/theme';
+import { useTheme } from '../lib/ThemeContext';
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -38,6 +38,8 @@ function features(plan) {
 }
 
 export default function UpgradeScreen({ navigation }) {
+  const { colors, fonts, radius } = useTheme();
+  const styles = getStyles(colors, fonts, radius);
   const { entitlements, refreshEntitlements } = useAuth();
   const [plans, setPlans] = useState([]);
   const [packages, setPackages] = useState([]);
@@ -228,7 +230,8 @@ export default function UpgradeScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors, fonts, radius) =>
+  StyleSheet.create({
   back: { fontFamily: fonts.monoBold, fontSize: 13, color: colors.accent },
   current: {
     fontFamily: fonts.mono,

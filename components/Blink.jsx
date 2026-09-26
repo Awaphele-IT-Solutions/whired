@@ -1,10 +1,12 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, Easing, Text } from 'react-native';
 
-import { colors, fonts } from '../lib/theme';
+import { useTheme } from '../lib/ThemeContext';
 
 // A blinking terminal-style cursor.
-export default function Blink({ char = '_', size = 12, color = colors.accent }) {
+export default function Blink({ char = '_', size = 12, color }) {
+  const { colors, fonts } = useTheme();
+  const resolvedColor = color ?? colors.accent;
   const opacity = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
@@ -30,7 +32,7 @@ export default function Blink({ char = '_', size = 12, color = colors.accent }) 
 
   return (
     <Animated.Text
-      style={{ opacity, color, fontFamily: fonts.monoBold, fontSize: size }}
+      style={{ opacity, color: resolvedColor, fontFamily: fonts.monoBold, fontSize: size }}
     >
       {char}
     </Animated.Text>

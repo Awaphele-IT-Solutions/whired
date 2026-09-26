@@ -8,12 +8,14 @@ import DotText from '../components/dot/DotText';
 import Screen from '../components/Screen';
 import Tile from '../components/Tile';
 import { supabase } from '../lib/supabase';
-import { colors, fonts } from '../lib/theme';
+import { useTheme } from '../lib/ThemeContext';
 import { useTabActive } from '../navigation/tabs';
 
 const FIELDS = ['situation', 'task', 'action', 'result'];
 
 export default function StoriesScreen() {
+  const { colors, fonts } = useTheme();
+  const styles = getStyles(colors, fonts);
   const navigation = useNavigation();
   const isActive = useTabActive('stories');
   const isFocused = useIsFocused();
@@ -89,7 +91,8 @@ export default function StoriesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors, fonts) =>
+  StyleSheet.create({
   body: {
     fontFamily: fonts.mono,
     fontSize: 13,

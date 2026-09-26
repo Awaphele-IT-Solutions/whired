@@ -1,7 +1,7 @@
-import React, { useCallback, useMemo, useState } from 'react';
-import { View } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Animated, StyleSheet, View } from 'react-native';
 
-import { colors } from '../lib/theme';
+import { useTheme } from '../lib/ThemeContext';
 import HomeScreen from '../screens/HomeScreen';
 import MockScreen from '../screens/MockScreen';
 import ResearchScreen from '../screens/ResearchScreen';
@@ -19,8 +19,10 @@ const TABS = [
 ];
 
 // Tabs stay mounted once visited (hidden, not unmounted) so a mock interview
-// in progress survives a trip to another tab.
+// in progress survives a trip to another tab. Switching tabs cross-fades
+// with a small slide instead of an instant cut.
 export default function MainTabs() {
+  const { colors } = useTheme();
   const [active, setActive] = useState('home');
   const [params, setParams] = useState({});
   const [visited, setVisited] = useState({ home: true });
@@ -39,17 +41,50 @@ export default function MainTabs() {
         <View style={{ flex: 1 }}>
           {TABS.map(({ key, Component }) =>
             visited[key] ? (
-              <View
-                key={key}
-                style={{ flex: 1, display: key === active ? 'flex' : 'none' }}
-              >
+              <TabPane key={key} visible={key === active}>
                 <Component />
-              </View>
+              </TabPane>
             ) : null
           )}
         </View>
         <TabBar tabs={TABS} active={active} onChange={(key) => goTo(key, {})} />
       </View>
     </TabsContext.Provider>
+  );
+}
+
+function TabPane({ visible, children }) {
+  const anim = useRef(new Animated.Value(visible ? 1 : 0)).current;
+  const [mountedVisible, setMountedVisible] = useState(visible);
+
+  useEffect(() => {
+    if (visible) setMountedVisible(true);
+    Animated.timing(anim, {
+      toValue: visible ? 1 : 0,
+      duration: 180,
+      useNativeDriver: true,
+    }).start(({ finished }) => {
+      if (finished && !visible) setMountedVisible(false);
+    });
+  }, [visible, anim]);
+
+  return (
+    <Animated.View
+      pointerEvents={visible ? 'auto' : 'none'}
+      style={[
+        StyleSheet.absoluteFill,
+        {
+          opacity: anim,
+          transform: [
+            {
+              translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [8, 0] }),
+            },
+          ],
+          display: mountedVisible ? 'flex' : 'none',
+        },
+      ]}
+    >
+      {children}
+    </Animated.View>
   );
 }

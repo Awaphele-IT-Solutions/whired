@@ -5,9 +5,11 @@ import DotText from '../components/dot/DotText';
 import Screen from '../components/Screen';
 import TargetForm from '../components/TargetForm';
 import { useAuth } from '../lib/auth';
-import { colors, fonts } from '../lib/theme';
+import { useTheme } from '../lib/ThemeContext';
 
 export default function OnboardingScreen() {
+  const { colors, fonts } = useTheme();
+  const styles = getStyles(colors, fonts);
   const { profile, user, updateProfile } = useAuth();
   const [saving, setSaving] = useState(false);
 
@@ -40,7 +42,8 @@ export default function OnboardingScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors, fonts) =>
+  StyleSheet.create({
   title: {
     fontFamily: fonts.monoBold,
     fontSize: 20,

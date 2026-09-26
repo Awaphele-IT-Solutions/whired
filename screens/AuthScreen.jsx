@@ -7,7 +7,7 @@ import Field from '../components/Field';
 import Screen from '../components/Screen';
 import SocialButtons from '../components/SocialButtons';
 import { supabase } from '../lib/supabase';
-import { colors, fonts } from '../lib/theme';
+import { useTheme } from '../lib/ThemeContext';
 
 const COPY = {
   signup: {
@@ -36,6 +36,8 @@ const COPY = {
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function AuthScreen() {
+  const { colors, fonts } = useTheme();
+  const styles = getStyles(colors, fonts);
   const [mode, setMode] = useState('signup');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -165,7 +167,8 @@ export default function AuthScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors, fonts) =>
+  StyleSheet.create({
   tagline: {
     fontFamily: fonts.mono,
     fontSize: 13,

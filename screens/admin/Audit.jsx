@@ -3,9 +3,12 @@ import { Text, View } from 'react-native';
 
 import Tile from '../../components/Tile';
 import { adminCall } from '../../lib/admin';
-import { adminStyles as s } from './common';
+import { useTheme } from '../../lib/ThemeContext';
+import { getAdminStyles } from './common';
 
 export default function Audit() {
+  const { colors, fonts, radius } = useTheme();
+  const s = getAdminStyles(colors, fonts, radius);
   const [entries, setEntries] = useState(null);
   const [error, setError] = useState(null);
 

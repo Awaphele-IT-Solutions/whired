@@ -5,12 +5,14 @@ import Button from '../../components/Button';
 import Field from '../../components/Field';
 import Tile from '../../components/Tile';
 import { adminCall } from '../../lib/admin';
-import { colors } from '../../lib/theme';
-import { adminStyles as s } from './common';
+import { useTheme } from '../../lib/ThemeContext';
+import { getAdminStyles } from './common';
 
 const blank = (v) => (v === null || v === undefined ? '' : String(v));
 
 function PlanCard({ plan, index, onSaved }) {
+  const { colors, fonts, radius } = useTheme();
+  const s = getAdminStyles(colors, fonts, radius);
   const [f, setF] = useState({
     name: plan.name,
     description: plan.description,
@@ -83,6 +85,8 @@ function PlanCard({ plan, index, onSaved }) {
 }
 
 export default function Plans({ data, reload }) {
+  const { colors, fonts, radius } = useTheme();
+  const s = getAdminStyles(colors, fonts, radius);
   return (
     <View>
       <Text style={[s.small, { marginBottom: 16 }]}>

@@ -6,13 +6,15 @@ import Chip from '../../components/Chip';
 import Field from '../../components/Field';
 import Tile from '../../components/Tile';
 import { adminCall } from '../../lib/admin';
-import { colors } from '../../lib/theme';
-import { adminStyles as s } from './common';
+import { useTheme } from '../../lib/ThemeContext';
+import { getAdminStyles } from './common';
 
 const DAYS = [30, 90, 365];
 const when = (v) => (v ? new Date(v).toLocaleDateString() : 'never');
 
 export default function Users({ plans }) {
+  const { colors, fonts, radius } = useTheme();
+  const s = getAdminStyles(colors, fonts, radius);
   const [email, setEmail] = useState('');
   const [user, setUser] = useState(undefined); // undefined = not searched, null = not found
   const [days, setDays] = useState(30);

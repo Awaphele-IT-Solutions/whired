@@ -1,9 +1,13 @@
 import React from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 
-import { colors, fonts, radius } from '../lib/theme';
+import { useTheme } from '../lib/ThemeContext';
+import AnimatedPressable from './AnimatedPressable';
+import GlassSurface from './GlassSurface';
 
-// variant: 'primary' (accent fill) | 'outline' | 'ghost'
+// variant: 'primary' (accent gradient fill, embossed) | 'outline' (glass) |
+// 'ghost' (transparent). Every variant shares the same 3D press animation.
 export default function Button({
   title,
   onPress,
@@ -12,50 +16,87 @@ export default function Button({
   disabled = false,
   style,
 }) {
+  const { colors, fonts, radius } = useTheme();
+  const styles = getStyles(colors, fonts, radius);
   const isPrimary = variant === 'primary';
   const off = disabled || loading;
+
+  const label = loading ? (
+    <ActivityIndicator color={isPrimary ? colors.onAccent : colors.ink} />
+  ) : (
+    <Text style={[styles.text, { color: isPrimary ? colors.onAccent : colors.ink }]}>
+      {title}
+    </Text>
+  );
+
+  let surface;
+  if (isPrimary) {
+    surface = (
+      <LinearGradient
+        colors={[colors.accentStrong, colors.accent]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={[styles.base, styles.primaryShadow]}
+      >
+        <View style={styles.primarySheen} pointerEvents="none" />
+        {label}
+      </LinearGradient>
+    );
+  } else if (variant === 'outline') {
+    surface = (
+      <GlassSurface radius={radius.field} style={{ opacity: off ? 0.5 : 1 }}>
+        <View style={styles.base}>{label}</View>
+      </GlassSurface>
+    );
+  } else {
+    surface = (
+      <View style={[styles.base, styles.ghost, { opacity: off ? 0.5 : 1 }]}>{label}</View>
+    );
+  }
+
   return (
-    <Pressable
+    <AnimatedPressable
       onPress={onPress}
       disabled={off}
       accessibilityRole="button"
       accessibilityState={{ disabled: off, busy: loading }}
-      style={({ pressed }) => [
-        styles.base,
-        variant === 'primary' && styles.primary,
-        variant === 'outline' && styles.outline,
-        variant === 'ghost' && styles.ghost,
-        pressed && { opacity: 0.8 },
-        off && { opacity: 0.45 },
-        style,
-      ]}
+      scaleTo={0.95}
+      tiltDeg={2}
+      style={style}
+      animatedStyle={isPrimary && off ? { opacity: 0.45 } : undefined}
     >
-      {loading ? (
-        <ActivityIndicator color={isPrimary ? colors.onAccent : colors.ink} />
-      ) : (
-        <Text
-          style={[
-            styles.text,
-            { color: isPrimary ? colors.onAccent : colors.ink },
-          ]}
-        >
-          {title}
-        </Text>
-      )}
-    </Pressable>
+      {surface}
+    </AnimatedPressable>
   );
 }
 
-const styles = StyleSheet.create({
-  base: {
-    minHeight: 52,
-    borderRadius: radius.field,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 18,
-  },
-  primary: { backgroundColor: colors.accent },
-  outline: { borderWidth: 1, borderColor: colors.line, backgroundColor: colors.card },
-  ghost: { backgroundColor: 'transparent' },
-  text: { fontFamily: fonts.monoBold, fontSize: 14 },
-});
+const getStyles = (colors, fonts, radius) =>
+  StyleSheet.create({
+    base: {
+      minHeight: 52,
+      borderRadius: radius.field,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: 18,
+      overflow: 'hidden',
+    },
+    ghost: { backgroundColor: 'transparent' },
+    primarySheen: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      height: '55%',
+      backgroundColor: 'rgba(255,255,255,0.16)',
+      borderTopLeftRadius: radius.field,
+      borderTopRightRadius: radius.field,
+    },
+    primaryShadow: {
+      shadowColor: colors.accent,
+      shadowOpacity: 0.35,
+      shadowRadius: 12,
+      shadowOffset: { width: 0, height: 6 },
+      elevation: 5,
+    },
+    text: { fontFamily: fonts.monoBold, fontSize: 14 },
+  });

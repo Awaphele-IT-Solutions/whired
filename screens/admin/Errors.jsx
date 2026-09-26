@@ -4,8 +4,8 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Chip from '../../components/Chip';
 import Tile from '../../components/Tile';
 import { adminCall } from '../../lib/admin';
-import { colors, fonts } from '../../lib/theme';
-import { adminStyles as s, fmt } from './common';
+import { useTheme } from '../../lib/ThemeContext';
+import { getAdminStyles, fmt } from './common';
 
 function timeAgo(iso) {
   if (!iso) return '';
@@ -17,6 +17,8 @@ function timeAgo(iso) {
 }
 
 function Stat({ label, value, warn }) {
+  const { colors, fonts } = useTheme();
+  const styles = getStyles(colors, fonts);
   return (
     <Tile label={label} style={styles.stat}>
       <Text style={[styles.statValue, warn && { color: colors.accent }]}>{fmt(value)}</Text>
@@ -25,6 +27,9 @@ function Stat({ label, value, warn }) {
 }
 
 export default function Errors() {
+  const { colors, fonts, radius } = useTheme();
+  const styles = getStyles(colors, fonts);
+  const s = getAdminStyles(colors, fonts, radius);
   const [calls, setCalls] = useState(null);
   const [metrics, setMetrics] = useState(null);
   const [error, setError] = useState(null);
@@ -104,21 +109,22 @@ export default function Errors() {
   );
 }
 
-const styles = StyleSheet.create({
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-    marginBottom: 14,
-  },
-  stat: { width: '31%', minWidth: 100, flexGrow: 1 },
-  statValue: { fontFamily: fonts.monoBold, fontSize: 18, color: colors.ink },
-  refresh: {
-    fontFamily: fonts.monoBold,
-    fontSize: 12,
-    color: colors.accent,
-    paddingVertical: 6,
-    paddingHorizontal: 4,
-  },
-  card: { marginBottom: 10 },
-});
+const getStyles = (colors, fonts) =>
+  StyleSheet.create({
+    grid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 10,
+      marginBottom: 14,
+    },
+    stat: { width: '31%', minWidth: 100, flexGrow: 1 },
+    statValue: { fontFamily: fonts.monoBold, fontSize: 18, color: colors.ink },
+    refresh: {
+      fontFamily: fonts.monoBold,
+      fontSize: 12,
+      color: colors.accent,
+      paddingVertical: 6,
+      paddingHorizontal: 4,
+    },
+    card: { marginBottom: 10 },
+  });

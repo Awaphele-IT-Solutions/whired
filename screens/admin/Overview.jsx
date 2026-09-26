@@ -4,12 +4,14 @@ import { StyleSheet, Text, View } from 'react-native';
 import DotRing from '../../components/dot/DotRing';
 import DotText from '../../components/dot/DotText';
 import Tile from '../../components/Tile';
-import { colors, fonts } from '../../lib/theme';
-import { STATUS_LABEL, adminStyles as s, fmt } from './common';
+import { useTheme } from '../../lib/ThemeContext';
+import { STATUS_LABEL, getAdminStyles, fmt } from './common';
 
 const LEVEL_LABEL = { critical: 'Critical', warn: 'Warning', info: 'Note' };
 
 function Stat({ label, value }) {
+  const { colors, fonts } = useTheme();
+  const styles = getStyles(colors, fonts);
   return (
     <Tile label={label} style={styles.stat}>
       <DotText text={String(value)} dot={3} gap={1.5} />
@@ -18,6 +20,9 @@ function Stat({ label, value }) {
 }
 
 export default function Overview({ data }) {
+  const { colors, fonts, radius } = useTheme();
+  const styles = getStyles(colors, fonts);
+  const s = getAdminStyles(colors, fonts, radius);
   const { capacity, stats, warnings, providers } = data;
   const used = capacity.rpd_capacity ? capacity.rpd_used / capacity.rpd_capacity : 0;
 
@@ -108,17 +113,18 @@ export default function Overview({ data }) {
   );
 }
 
-const styles = StyleSheet.create({
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  stat: { width: '47.5%', minHeight: 96 },
-  warning: { flexDirection: 'row', gap: 12 },
-  marker: { width: 10, height: 10, borderRadius: 5, marginTop: 6, backgroundColor: colors.dotOff },
-  level: {
-    fontFamily: fonts.mono,
-    fontSize: 10,
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    color: colors.mute,
-    marginBottom: 2,
-  },
-});
+const getStyles = (colors, fonts) =>
+  StyleSheet.create({
+    grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+    stat: { width: '47.5%', minHeight: 96 },
+    warning: { flexDirection: 'row', gap: 12 },
+    marker: { width: 10, height: 10, borderRadius: 5, marginTop: 6, backgroundColor: colors.dotOff },
+    level: {
+      fontFamily: fonts.mono,
+      fontSize: 10,
+      letterSpacing: 1,
+      textTransform: 'uppercase',
+      color: colors.mute,
+      marginBottom: 2,
+    },
+  });

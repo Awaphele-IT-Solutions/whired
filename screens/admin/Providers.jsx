@@ -7,8 +7,8 @@ import DotMeter from '../../components/dot/DotMeter';
 import Field from '../../components/Field';
 import Tile from '../../components/Tile';
 import { adminCall } from '../../lib/admin';
-import { colors, fonts } from '../../lib/theme';
-import { STATUS_LABEL, adminStyles as s, fmt } from './common';
+import { useTheme } from '../../lib/ThemeContext';
+import { STATUS_LABEL, getAdminStyles, fmt } from './common';
 
 // Endpoints for common services. Model names are left for you to fill in so
 // they never go stale in the app: use the exact model id from the provider.
@@ -25,6 +25,8 @@ const PRESETS = [
 const numOrBlank = (v) => (v === null || v === undefined ? '' : String(v));
 
 function Toggle({ label, hint, value, onValueChange }) {
+  const { colors, fonts, radius } = useTheme();
+  const s = getAdminStyles(colors, fonts, radius);
   return (
     <View style={{ marginBottom: 18 }}>
       <View style={s.row}>
@@ -42,6 +44,8 @@ function Toggle({ label, hint, value, onValueChange }) {
 }
 
 function UsageRow({ label, used, limit }) {
+  const { colors, fonts } = useTheme();
+  const styles = getStyles(colors, fonts);
   const pct = limit ? Math.min(100, (used / limit) * 100) : 0;
   return (
     <View style={styles.usage}>
@@ -56,6 +60,8 @@ function UsageRow({ label, used, limit }) {
 }
 
 function ProviderForm({ initial, onDone, onCancel }) {
+  const { colors, fonts, radius } = useTheme();
+  const s = getAdminStyles(colors, fonts, radius);
   const editing = !!initial;
   const [f, setF] = useState({
     label: initial?.label ?? '',
@@ -214,6 +220,9 @@ function ProviderForm({ initial, onDone, onCancel }) {
 }
 
 export default function Providers({ data, reload }) {
+  const { colors, fonts, radius } = useTheme();
+  const styles = getStyles(colors, fonts);
+  const s = getAdminStyles(colors, fonts, radius);
   const [editing, setEditing] = useState(null); // null | 'new' | provider
   const [testing, setTesting] = useState(null);
 
@@ -343,9 +352,10 @@ export default function Providers({ data, reload }) {
   );
 }
 
-const styles = StyleSheet.create({
-  usage: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-  usageLabel: { width: 78, fontFamily: fonts.mono, fontSize: 10, color: colors.mute },
-  usageValue: { flex: 1, textAlign: 'right', fontFamily: fonts.mono, fontSize: 10, color: colors.ink },
-  limitLine: { fontFamily: fonts.mono, fontSize: 10, color: colors.mute, lineHeight: 15 },
-});
+const getStyles = (colors, fonts) =>
+  StyleSheet.create({
+    usage: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+    usageLabel: { width: 78, fontFamily: fonts.mono, fontSize: 10, color: colors.mute },
+    usageValue: { flex: 1, textAlign: 'right', fontFamily: fonts.mono, fontSize: 10, color: colors.ink },
+    limitLine: { fontFamily: fonts.mono, fontSize: 10, color: colors.mute, lineHeight: 15 },
+  });
