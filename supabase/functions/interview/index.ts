@@ -25,6 +25,7 @@ function systemPrompt(ctx: { company: string; role: string; category: string; le
     `The candidate is ${LEVELS[ctx.level] ?? "a candidate"}. Interview type: ${ctx.category}.`,
     "Sound like a real, professional interviewer, not a chatbot. Vary your phrasing turn to turn: never open feedback the same way twice in a row, and never fall back on stock phrases like 'great answer', 'nice job', 'thanks for sharing', or 'I understand'.",
     "Ask one realistic question at a time, pitched at that level, and let it build naturally on what the candidate just said rather than jumping to an unrelated topic.",
+    "When organisation research is present, spend some of the interview testing fit: values, vision, culture, how they would handle the organisation's current challenges, and whether they can add to its strengths. Do this through questions, not lectures.",
     "Ground every piece of feedback in a specific detail the candidate actually said — reference it directly so it's clear you were listening, not templating. If the answer was thin (no concrete example, no outcome, no specifics), say so plainly and explain what a stronger answer would have included.",
     "Keep questions to one or two sentences and feedback to two or three sentences plus one concrete, actionable tip.",
     "Do not claim to know this company's real interview questions or internal hiring process.",
@@ -106,16 +107,26 @@ Deno.serve(async (req) => {
       return { feedback, nextQuestion };
     };
   } else {
-    instruction = `The mock interview is complete. Based on the full transcript, evaluate the candidate the way a real hiring manager would write up notes after an interview: honest, specific, and grounded in what was actually said — reference at least one concrete moment from the transcript in the feedback. Avoid generic filler like "good communication skills" with nothing behind it. Respond ONLY as JSON in exactly this shape:
+    instruction = `The mock interview is complete. Based on the full transcript${research ? " and the organisation research" : ""}, evaluate the candidate the way a real hiring manager would write up notes after an interview: honest, specific, and grounded in what was actually said — reference at least one concrete moment from the transcript. Avoid generic filler like "good communication skills" with nothing behind it.
+${research ? "Judge whether they are a fit for this organisation and role using the research: values, vision, culture, the area they operate in, current challenges, and strengths. Say clearly if the evidence is too thin to judge." : "No organisation research was available, so keep fit notes generic to the role and mark fit as unclear if you cannot judge culture fit."}
+Respond ONLY as JSON in exactly this shape:
 {
-  "score": <integer 0-100, overall>,
+  "score": <integer 0-100, overall interview performance>,
   "message": "<short one-line summary, e.g. 'Strong performance'>",
   "feedback": ["<point 1>", "<point 2>", "<point 3>"],
-  "stats": { "communication": <0-100>, "relevance": <0-100>, "confidence": <0-100>, "clarity": <0-100> }
+  "stats": { "communication": <0-100>, "relevance": <0-100>, "confidence": <0-100>, "clarity": <0-100>, "culture_fit": <0-100> },
+  "fit_score": <integer 0-100, how well they fit this role and organisation>,
+  "fit_verdict": "<strong match | possible match | weak match | unclear>",
+  "fit_why": ["<up to 4 pieces of evidence they match values, culture or the role>"],
+  "fit_gaps": ["<up to 4 gaps against the organisation's needs, culture or current challenges>"]
 }`;
     validate = (text) => {
       const out = parseJsonLoose(text);
       if (out?.score === undefined) throw new Error("missing score");
+      const verdictRaw = clean(out?.fit_verdict, 40).toLowerCase();
+      const verdict = ["strong match", "possible match", "weak match", "unclear"].includes(verdictRaw)
+        ? verdictRaw
+        : "unclear";
       return {
         score: clampInt(out.score, 0, 100),
         message: clean(out.message, 120),
@@ -125,7 +136,12 @@ Deno.serve(async (req) => {
           relevance: clampInt(out.stats?.relevance, 0, 100),
           confidence: clampInt(out.stats?.confidence, 0, 100),
           clarity: clampInt(out.stats?.clarity, 0, 100),
+          culture_fit: clampInt(out.stats?.culture_fit ?? out.fit_score, 0, 100),
         },
+        fit_score: clampInt(out.fit_score ?? out.stats?.culture_fit, 0, 100),
+        fit_verdict: verdict,
+        fit_why: (Array.isArray(out.fit_why) ? out.fit_why : []).slice(0, 4).map((f: unknown) => clean(f, 280)).filter(Boolean),
+        fit_gaps: (Array.isArray(out.fit_gaps) ? out.fit_gaps : []).slice(0, 4).map((f: unknown) => clean(f, 280)).filter(Boolean),
       };
     };
   }
@@ -138,7 +154,7 @@ Deno.serve(async (req) => {
         system,
         messages: [...history, { role: "user", content: instruction }],
         json: true,
-        maxTokens: 1200,
+        maxTokens: 1600,
         timeoutMs: 25_000,
         maxAttempts: 3,
         validate,
