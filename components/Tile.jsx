@@ -60,6 +60,7 @@ const getStyles = (colors, fonts, radius) =>
   StyleSheet.create({
     pad: {
       padding: 16,
+      flex: 1,
     },
     head: {
       flexDirection: 'row',

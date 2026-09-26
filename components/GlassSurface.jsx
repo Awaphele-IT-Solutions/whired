@@ -34,22 +34,23 @@ export default function GlassSurface({
         style,
       ]}
     >
-      <View style={{ borderRadius: r, overflow: 'hidden' }}>
+      <View style={{ borderRadius: r, overflow: 'hidden', flex: 1 }}>
         <BlurView
           intensity={intensity}
           tint={colors.glassTint}
           style={StyleSheet.absoluteFill}
-        >
-          <View
-            style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassFill }]}
-          />
-          <LinearGradient
-            colors={colors.glassHighlight}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 0, y: 0.7 }}
-            style={StyleSheet.absoluteFill}
-          />
-        </BlurView>
+        />
+        <View
+          pointerEvents="none"
+          style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassFill }]}
+        />
+        <LinearGradient
+          pointerEvents="none"
+          colors={colors.glassHighlight}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 0.7 }}
+          style={StyleSheet.absoluteFill}
+        />
         {bordered ? (
           <View
             pointerEvents="none"
