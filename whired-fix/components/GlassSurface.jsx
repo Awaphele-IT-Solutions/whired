@@ -23,6 +23,7 @@ export default function GlassSurface({
   intensity = 34,
   elevated = true,
   bordered = true,
+  blur = false,
   children,
 }) {
   const { colors, radius } = useTheme();
@@ -42,14 +43,19 @@ export default function GlassSurface({
         style,
       ]}
     >
-      <BlurView
-        intensity={intensity}
-        tint={colors.glassTint}
-        style={[StyleSheet.absoluteFill, { borderRadius: r, overflow: 'hidden' }]}
-      />
+      {blur ? (
+        <BlurView
+          intensity={intensity}
+          tint={colors.glassTint}
+          style={[StyleSheet.absoluteFill, { borderRadius: r, overflow: 'hidden' }]}
+        />
+      ) : null}
       <View
         pointerEvents="none"
-        style={[StyleSheet.absoluteFill, { borderRadius: r, backgroundColor: colors.glassFill }]}
+        style={[
+          StyleSheet.absoluteFill,
+          { borderRadius: r, backgroundColor: blur ? colors.glassFill : colors.glassFillSolid },
+        ]}
       />
       <LinearGradient
         pointerEvents="none"

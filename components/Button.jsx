@@ -31,16 +31,22 @@ export default function Button({
 
   let surface;
   if (isPrimary) {
+    // Shadow and rounded-corner clipping can't safely share one layer
+    // (overflow: 'hidden' clips the shadow unpredictably), so the shadow
+    // lives on a plain outer wrapper and the clipping/gradient on the
+    // layer inside it.
     surface = (
-      <LinearGradient
-        colors={[colors.accentStrong, colors.accent]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
-        style={[styles.base, styles.primaryShadow]}
-      >
-        <View style={styles.primarySheen} pointerEvents="none" />
-        {label}
-      </LinearGradient>
+      <View style={styles.primaryShadowWrap}>
+        <LinearGradient
+          colors={[colors.accentStrong, colors.accent]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 1 }}
+          style={styles.base}
+        >
+          <View style={styles.primarySheen} pointerEvents="none" />
+          {label}
+        </LinearGradient>
+      </View>
     );
   } else if (variant === 'outline') {
     surface = (
@@ -91,7 +97,8 @@ const getStyles = (colors, fonts, radius) =>
       borderTopLeftRadius: radius.field,
       borderTopRightRadius: radius.field,
     },
-    primaryShadow: {
+    primaryShadowWrap: {
+      borderRadius: radius.field,
       shadowColor: colors.accent,
       shadowOpacity: 0.35,
       shadowRadius: 12,
