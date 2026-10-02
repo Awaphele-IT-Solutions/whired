@@ -1,7 +1,7 @@
 import React, { memo, useMemo } from 'react';
 import { View } from 'react-native';
 
-import { colors } from '../../lib/theme';
+import { useTheme } from '../../lib/ThemeContext';
 import { GLYPHS } from './glyphs';
 
 // Size of a rendered string, so callers can lay things out around it.
@@ -21,12 +21,15 @@ function DotText({
   text,
   dot = 3,
   gap = 1.5,
-  color = colors.ink,
-  accent = colors.accent,
+  color,
+  accent,
   accentChars = '',
   ghost = false,
   style,
 }) {
+  const { colors } = useTheme();
+  const dotColor = color ?? colors.ink;
+  const dotAccent = accent ?? colors.accent;
   const value = String(text).toUpperCase();
   const { width, height, pitch } = measureDotText(value, dot, gap);
 
@@ -70,8 +73,8 @@ function DotText({
             borderRadius: dot / 2,
             backgroundColor: d.on
               ? d.isAccent
-                ? accent
-                : color
+                ? dotAccent
+                : dotColor
               : colors.dotOff,
           }}
         />

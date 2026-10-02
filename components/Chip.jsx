@@ -1,34 +1,40 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 
-import { colors, fonts, radius } from '../lib/theme';
+import { useTheme } from '../lib/ThemeContext';
+import AnimatedPressable from './AnimatedPressable';
 
 export default function Chip({ label, selected, onPress }) {
+  const { colors, fonts, radius } = useTheme();
+  const styles = getStyles(colors, fonts, radius);
   return (
-    <Pressable
+    <AnimatedPressable
       onPress={onPress}
       accessibilityRole="button"
       accessibilityState={{ selected: !!selected }}
-      style={[styles.chip, selected && styles.selected]}
+      scaleTo={0.94}
+      tiltDeg={1}
+      animatedStyle={[styles.chip, selected && styles.selected]}
     >
       <Text style={[styles.text, selected && styles.textSelected]}>{label}</Text>
-    </Pressable>
+    </AnimatedPressable>
   );
 }
 
-const styles = StyleSheet.create({
-  chip: {
-    borderWidth: 1,
-    borderColor: colors.line,
-    backgroundColor: colors.card,
-    borderRadius: radius.pill,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-  },
-  selected: {
-    borderColor: colors.accent,
-    backgroundColor: colors.accentSoft,
-  },
-  text: { fontFamily: fonts.mono, fontSize: 12, color: colors.mute },
-  textSelected: { color: colors.ink },
-});
+const getStyles = (colors, fonts, radius) =>
+  StyleSheet.create({
+    chip: {
+      borderWidth: 1,
+      borderColor: colors.line,
+      backgroundColor: colors.card,
+      borderRadius: radius.pill,
+      paddingVertical: 10,
+      paddingHorizontal: 14,
+    },
+    selected: {
+      borderColor: colors.accent,
+      backgroundColor: colors.accentSoft,
+    },
+    text: { fontFamily: fonts.mono, fontSize: 12, color: colors.mute },
+    textSelected: { color: colors.ink },
+  });

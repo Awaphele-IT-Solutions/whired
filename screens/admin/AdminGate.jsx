@@ -6,12 +6,14 @@ import DotText from '../../components/dot/DotText';
 import Field from '../../components/Field';
 import Screen from '../../components/Screen';
 import { supabase } from '../../lib/supabase';
-import { colors, fonts, radius } from '../../lib/theme';
+import { useTheme } from '../../lib/ThemeContext';
 
 // The admin console holds API keys and billing controls, so it requires a
 // second factor (authenticator app code) every session. The server checks
 // this too: the admin function rejects any token that isn't aal2.
 export default function AdminGate({ onExit, children }) {
+  const { colors, fonts, radius } = useTheme();
+  const styles = getStyles(colors, fonts, radius);
   const [phase, setPhase] = useState('checking'); // checking | enroll | verify | ready | error
   const [factorId, setFactorId] = useState(null);
   const [secret, setSecret] = useState(null);
@@ -159,7 +161,8 @@ export default function AdminGate({ onExit, children }) {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors, fonts, radius) =>
+  StyleSheet.create({
   link: { fontFamily: fonts.monoBold, fontSize: 13, color: colors.accent },
   title: { fontFamily: fonts.monoBold, fontSize: 18, color: colors.ink, marginTop: 26, marginBottom: 10 },
   body: { fontFamily: fonts.mono, fontSize: 13, lineHeight: 20, color: colors.mute, marginTop: 16, marginBottom: 20 },

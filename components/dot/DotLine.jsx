@@ -1,7 +1,7 @@
 import React, { memo, useMemo } from 'react';
 import { View } from 'react-native';
 
-import { colors } from '../../lib/theme';
+import { useTheme } from '../../lib/ThemeContext';
 
 // A dotted line chart. The latest point gets an accent ring marker.
 function DotLine({
@@ -10,9 +10,12 @@ function DotLine({
   height = 80,
   dot = 3,
   spacing = 7,
-  color = colors.ink,
-  accent = colors.accent,
+  color,
+  accent,
 }) {
+  const { colors } = useTheme();
+  const dotColor = color ?? colors.ink;
+  const dotAccent = accent ?? colors.accent;
   const { dots, last } = useMemo(() => {
     const out = [];
     const n = values.length;
@@ -67,7 +70,7 @@ function DotLine({
             width: dot,
             height: dot,
             borderRadius: dot / 2,
-            backgroundColor: d.on ? color : colors.dotOff,
+            backgroundColor: d.on ? dotColor : colors.dotOff,
           }}
         />
       ))}
@@ -81,7 +84,7 @@ function DotLine({
             height: ring,
             borderRadius: ring / 2,
             borderWidth: 1.5,
-            borderColor: accent,
+            borderColor: dotAccent,
             alignItems: 'center',
             justifyContent: 'center',
           }}
@@ -91,7 +94,7 @@ function DotLine({
               width: 4,
               height: 4,
               borderRadius: 2,
-              backgroundColor: accent,
+              backgroundColor: dotAccent,
             }}
           />
         </View>

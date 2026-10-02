@@ -3,6 +3,7 @@ import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native'
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 
 import Button from '../components/Button';
+import Chip from '../components/Chip';
 import DotText from '../components/dot/DotText';
 import Screen from '../components/Screen';
 import TargetForm from '../components/TargetForm';
@@ -11,10 +12,18 @@ import { useAuth } from '../lib/auth';
 import { PRIVACY_POLICY_URL, SUPPORT_EMAIL, TERMS_URL } from '../lib/config';
 import { formatShortDate } from '../lib/dates';
 import { supabase } from '../lib/supabase';
-import { colors, fonts } from '../lib/theme';
+import { useTheme } from '../lib/ThemeContext';
 import { useTabActive } from '../navigation/tabs';
 
+const APPEARANCE_MODES = [
+  { key: 'system', label: 'System' },
+  { key: 'light', label: 'Light' },
+  { key: 'dark', label: 'Dark' },
+];
+
 export default function ProfileScreen() {
+  const { colors, fonts, mode, setMode, isDark } = useTheme();
+  const styles = getStyles(colors, fonts);
   const navigation = useNavigation();
   const { user, profile, entitlements, isAdmin, updateProfile, signOut, deleteAccount } = useAuth();
   const isActive = useTabActive('you');
@@ -76,6 +85,25 @@ export default function ProfileScreen() {
     <Screen>
       <DotText text="YOU" dot={5} gap={2} />
       <Text style={styles.email}>{user?.email}</Text>
+
+      <Text style={styles.section}>Appearance</Text>
+      <Tile label="Theme" style={{ marginBottom: 36 }}>
+        <View style={styles.row}>
+          {APPEARANCE_MODES.map((m) => (
+            <Chip
+              key={m.key}
+              label={m.label}
+              selected={mode === m.key}
+              onPress={() => setMode(m.key)}
+            />
+          ))}
+        </View>
+        <Text style={styles.hint}>
+          {mode === 'system'
+            ? `Following your device, currently ${isDark ? 'dark' : 'light'}.`
+            : `Always ${isDark ? 'dark' : 'light'}, regardless of your device.`}
+        </Text>
+      </Tile>
 
       <Text style={styles.section}>Target</Text>
       {/* key remounts the form when the saved profile changes underneath it */}
@@ -153,7 +181,8 @@ export default function ProfileScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors, fonts) =>
+  StyleSheet.create({
   email: {
     fontFamily: fonts.mono,
     fontSize: 12,
@@ -173,6 +202,18 @@ const styles = StyleSheet.create({
     color: colors.ink,
     marginTop: 12,
     textAlign: 'center',
+  },
+  row: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  hint: {
+    fontFamily: fonts.mono,
+    fontSize: 11,
+    lineHeight: 16,
+    color: colors.faint,
+    marginTop: 12,
   },
   empty: { fontFamily: fonts.mono, fontSize: 12, lineHeight: 19, color: colors.faint },
   rowTitle: { fontFamily: fonts.monoBold, fontSize: 13, color: colors.ink },

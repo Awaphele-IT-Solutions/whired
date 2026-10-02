@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { addDays, parseDayKey, startOfToday, toDayKey } from '../lib/dates';
-import { colors, fonts } from '../lib/theme';
+import { useTheme } from '../lib/ThemeContext';
 import Button from './Button';
 import Chip from './Chip';
 import Field from './Field';
@@ -23,6 +23,8 @@ const DATE_PRESETS = [
 
 // Shared by onboarding and the profile tab.
 export default function TargetForm({ initial, submitLabel, loading, onSubmit }) {
+  const { colors, fonts } = useTheme();
+  const styles = getStyles(colors, fonts);
   const [name, setName] = useState(initial?.display_name ?? '');
   const [role, setRole] = useState(initial?.target_role ?? '');
   const [company, setCompany] = useState(initial?.target_company ?? '');
@@ -127,26 +129,27 @@ export default function TargetForm({ initial, submitLabel, loading, onSubmit }) 
   );
 }
 
-const styles = StyleSheet.create({
-  label: {
-    fontFamily: fonts.mono,
-    fontSize: 11,
-    letterSpacing: 1.1,
-    textTransform: 'uppercase',
-    color: colors.mute,
-    marginBottom: 10,
-  },
-  row: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 18,
-  },
-  error: {
-    fontFamily: fonts.mono,
-    fontSize: 12,
-    lineHeight: 18,
-    color: colors.accent,
-    marginBottom: 14,
-  },
-});
+const getStyles = (colors, fonts) =>
+  StyleSheet.create({
+    label: {
+      fontFamily: fonts.mono,
+      fontSize: 11,
+      letterSpacing: 1.1,
+      textTransform: 'uppercase',
+      color: colors.mute,
+      marginBottom: 10,
+    },
+    row: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+      marginBottom: 18,
+    },
+    error: {
+      fontFamily: fonts.mono,
+      fontSize: 12,
+      lineHeight: 18,
+      color: colors.accent,
+      marginBottom: 14,
+    },
+  });

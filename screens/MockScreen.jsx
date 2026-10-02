@@ -16,7 +16,7 @@ import { describeInterviewError, fetchSummary, fetchTurn } from '../lib/intervie
 import { normalizeOrg } from '../lib/org';
 import { SKILLS } from '../lib/stats';
 import { supabase } from '../lib/supabase';
-import { colors, fonts } from '../lib/theme';
+import { useTheme } from '../lib/ThemeContext';
 import { useTabs } from '../navigation/tabs';
 
 const CATEGORIES = [
@@ -51,6 +51,8 @@ function normaliseSummary(raw) {
 }
 
 export default function MockScreen() {
+  const { colors, fonts } = useTheme();
+  const styles = getStyles(colors, fonts);
   const { profile } = useAuth();
   const { params, goTo } = useTabs();
   const preset = params?.presetQuestion || null;
@@ -495,7 +497,8 @@ export default function MockScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors, fonts) =>
+  StyleSheet.create({
   title: {
     fontFamily: fonts.monoBold,
     fontSize: 20,

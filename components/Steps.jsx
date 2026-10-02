@@ -1,10 +1,11 @@
 import React from 'react';
 import { View } from 'react-native';
 
-import { colors } from '../lib/theme';
+import { useTheme } from '../lib/ThemeContext';
 
 // Checkpoint row: filled accent nodes are done, the next one is ringed.
 export default function Steps({ total = 3, done = 0 }) {
+  const { colors } = useTheme();
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
       {Array.from({ length: total }, (_, i) => {

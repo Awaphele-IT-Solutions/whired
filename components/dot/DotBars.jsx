@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import { View } from 'react-native';
 
-import { colors } from '../../lib/theme';
+import { useTheme } from '../../lib/ThemeContext';
 
 // Columns of dots. `values` are 0..1. Bars grow from the bottom, or from the
 // centre when `mirror` is set (waveform look). The last `accentLast` columns
@@ -11,11 +11,14 @@ function DotBars({
   rows = 7,
   dot = 4,
   gap = 3,
-  color = colors.ink,
-  accent = colors.accent,
+  color,
+  accent,
   accentLast = 1,
   mirror = false,
 }) {
+  const { colors } = useTheme();
+  const dotColor = color ?? colors.ink;
+  const dotAccent = accent ?? colors.accent;
   const total = mirror && rows % 2 === 0 ? rows + 1 : rows;
   const mid = (total - 1) / 2;
 
@@ -46,8 +49,8 @@ function DotBars({
                     marginTop: r === 0 ? 0 : gap,
                     backgroundColor: on
                       ? isAccent
-                        ? accent
-                        : color
+                        ? dotAccent
+                        : dotColor
                       : colors.dotOff,
                   }}
                 />

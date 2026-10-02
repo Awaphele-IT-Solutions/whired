@@ -6,11 +6,13 @@ import {
   signInWithApple,
   signInWithBrowserProvider,
 } from '../lib/oauth';
-import { colors, fonts } from '../lib/theme';
+import { useTheme } from '../lib/ThemeContext';
 import Button from './Button';
 
 // Continue with Google / Microsoft / Apple. Apple appears on iOS only.
 export default function SocialButtons({ onError }) {
+  const { colors, fonts } = useTheme();
+  const styles = getStyles(colors, fonts);
   const [busy, setBusy] = useState(null);
   const [showApple, setShowApple] = useState(false);
 
@@ -75,15 +77,16 @@ export default function SocialButtons({ onError }) {
   );
 }
 
-const styles = StyleSheet.create({
-  btn: { marginBottom: 10 },
-  divider: { flexDirection: 'row', alignItems: 'center', gap: 12, marginVertical: 18 },
-  line: { flex: 1, height: 1, backgroundColor: colors.line },
-  or: {
-    fontFamily: fonts.mono,
-    fontSize: 11,
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    color: colors.faint,
-  },
-});
+const getStyles = (colors, fonts) =>
+  StyleSheet.create({
+    btn: { marginBottom: 10 },
+    divider: { flexDirection: 'row', alignItems: 'center', gap: 12, marginVertical: 18 },
+    line: { flex: 1, height: 1, backgroundColor: colors.line },
+    or: {
+      fontFamily: fonts.mono,
+      fontSize: 11,
+      letterSpacing: 1,
+      textTransform: 'uppercase',
+      color: colors.faint,
+    },
+  });

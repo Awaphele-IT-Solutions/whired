@@ -12,7 +12,7 @@ import { useAuth } from '../lib/auth';
 import { formatShortDate } from '../lib/dates';
 import { describeResearchError, normalizeOrg, requestResearch } from '../lib/org';
 import { supabase } from '../lib/supabase';
-import { colors, fonts, radius } from '../lib/theme';
+import { useTheme } from '../lib/ThemeContext';
 import { useTabActive, useTabs } from '../navigation/tabs';
 
 function remainingCredits(ent) {
@@ -21,6 +21,8 @@ function remainingCredits(ent) {
 }
 
 function QuotaTile({ ent, onUpgrade }) {
+  const { colors, fonts, radius } = useTheme();
+  const styles = getStyles(colors, fonts, radius);
   if (!ent) return null;
   const unlimited = ent.research_limit == null;
   const left = remainingCredits(ent);
@@ -67,6 +69,8 @@ function QuotaTile({ ent, onUpgrade }) {
 }
 
 function Section({ title, children }) {
+  const { colors, fonts, radius } = useTheme();
+  const styles = getStyles(colors, fonts, radius);
   return (
     <View style={{ marginBottom: 18 }}>
       <Text style={styles.sectionTitle}>{title}</Text>
@@ -76,6 +80,8 @@ function Section({ title, children }) {
 }
 
 function Bullets({ items }) {
+  const { colors, fonts, radius } = useTheme();
+  const styles = getStyles(colors, fonts, radius);
   return items.map((t, i) => (
     <Text key={i} style={[styles.body, i > 0 && { marginTop: 6 }]}>
       - {t}
@@ -84,6 +90,8 @@ function Bullets({ items }) {
 }
 
 function ResearchDetail({ item, ent, onBack, onChanged, onUpgrade }) {
+  const { colors, fonts, radius } = useTheme();
+  const styles = getStyles(colors, fonts, radius);
   const { profile, refreshEntitlements } = useAuth();
   const { goTo } = useTabs();
   const [notes, setNotes] = useState(item.notes ?? '');
@@ -291,6 +299,8 @@ function ResearchDetail({ item, ent, onBack, onChanged, onUpgrade }) {
 }
 
 export default function ResearchScreen() {
+  const { colors, fonts, radius } = useTheme();
+  const styles = getStyles(colors, fonts, radius);
   const navigation = useNavigation();
   const { params } = useTabs();
   const { profile, entitlements, refreshEntitlements } = useAuth();
@@ -489,7 +499,8 @@ export default function ResearchScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors, fonts, radius) =>
+  StyleSheet.create({
   intro: {
     fontFamily: fonts.mono,
     fontSize: 13,
