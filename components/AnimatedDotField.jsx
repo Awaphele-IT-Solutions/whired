@@ -11,11 +11,11 @@ import { useTheme } from '../lib/ThemeContext';
 // blobby patches. Every term uses a whole-number multiple of the loop phase,
 // so the cycle repeats seamlessly. Each dot's scale/opacity curve is
 // pre-sampled at mount and driven natively, with no per-frame JS work.
-const TARGET_DOTS = 1100;
+const TARGET_DOTS = 550;
 const SAMPLES = 60; // highest harmonic is 5, so this is 12 keyframes per period
 const CYCLE_MS = 9000;
 const MIN_SCALE = 0;
-const MAX_SCALE = 1.0;
+const MAX_SCALE = 1.5;
 const MIN_OPACITY = 0;
 const MAX_OPACITY = 0.7;
 const DOT_BASE = 7;
